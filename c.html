@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Calculator</title>
+    <style>
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --text: #333;
+            --text-light: #666;
+            --background: #f9f9f9;
+            --card: #fff;
+            --border: #e0e0e0;
+            --invested: #64B5F6; /* Light blue */
+            --revenue: #81C784; /* Light green */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+            font-family: monospace;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .result-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .result-card.invested {
+            background: var(--invested);
+        }
+        
+        .result-card.revenue {
+            background: var(--revenue);
+        }
+        
+        .result-card.total {
+            background: var(--primary);
+        }
+        
+        .result-card h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .result-card p {
+            font-size: 20px;
+            font-weight: 600;
+            font-family: monospace;
+        }
+        
+        .chart-container {
+            height: 350px;
+            position: relative;
+            margin-top: 20px;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .year-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .stacked-bar {
+            width: 50px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            height: 100%;
+        }
+        
+        .bar-segment {
+            width: 100%;
+            transition: height 0.5s ease;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .bar-invested {
+            background: var(--invested);
+        }
+        
+        .bar-revenue {
+            background: var(--revenue);
+        }
+        
+        .year-label {
+            position: absolute;
+            bottom: -35px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            width: 100%;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+            gap: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        .summary {
+            margin-top: 25px;
+            padding: 20px;
+            background: #E8F5E9;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .summary h3 {
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+        }
+        
+        .summary p {
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-family: monospace;
+        }
+        
+        .chart-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            transform: translateX(-50%);
+            left: 50%;
+            top: -10px;
+            margin-top: -100%;
+            font-family: monospace;
+            text-align: center;
+        }
+        
+        .tooltip:after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.85);
+        }
+        
+        .tooltip.show {
+            opacity: 1;
+        }
+        
+        .stacked-bar:hover {
+            transform: scale(1.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+        
+        .empty-state p {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Investment Calculator</h1>
+            <p>Visualize your investment growth over time</p>
+        </header>
+        
+        <div class="container">
+            <div class="card">
+                <h2>Investment Parameters</h2>
+                <div class="input-group">
+                    <label for="initialAmount">Initial Investment (€)</label>
+                    <input type="number" id="initialAmount" placeholder="0" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="monthlyInvestment">Monthly Investment (€)</label>
+                    <input type="number" id="monthlyInvestment" placeholder="0" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="years">Investment Period (Years)</label>
+                    <input type="number" id="years" placeholder="0" min="1" max="50">
+                </div>
+                
+                <div class="input-group">
+                    <label for="returnRate">Annual Return Rate (%)</label>
+                    <input type="number" id="returnRate" placeholder="0" min="0" max="50" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="investmentIncrease">Annual Investment Increase (%)</label>
+                    <input type="number" id="investmentIncrease" placeholder="0" min="0" max="20" step="0.1">
+                </div>
+                
+                <button id="calculateBtn">Calculate</button>
+                
+                <div class="results">
+                    <div class="result-card invested">
+                        <h3>Total Invested</h3>
+                        <p id="totalInvested">€0</p>
+                    </div>
+                    <div class="result-card revenue">
+                        <h3>Total Revenue</h3>
+                        <p id="totalRevenue">€0</p>
+                    </div>
+                    <div class="result-card total">
+                        <h3>Final Amount</h3>
+                        <p id="finalAmount">€0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Investment Growth</h2>
+                <div class="chart-title">Yearly Breakdown</div>
+                <div class="chart-container">
+                    <div class="chart" id="chart">
+                        <div class="empty-state" id="emptyState">
+                            <p>Enter your investment parameters and click Calculate to see the chart</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--invested);"></div>
+                        <span>Total Invested</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--revenue);"></div>
+                        <span>Total Revenue</span>
+                    </div>
+                </div>
+                
+                <div class="summary" id="summary">
+                    <div class="empty-state">
+                        <p>Calculation results will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculateBtn');
+            calculateBtn.addEventListener('click', calculateInvestment);
+            
+            function calculateInvestment() {
+                // Get input values
+                const initialAmount = parseFloat(document.getElementById('initialAmount').value) || 0;
+                const monthlyInvestment = parseFloat(document.getElementById('monthlyInvestment').value) || 0;
+                const years = parseInt(document.getElementById('years').value) || 0;
+                const returnRate = parseFloat(document.getElementById('returnRate').value) || 0;
+                const investmentIncrease = parseFloat(document.getElementById('investmentIncrease').value) || 0;
+                
+                // Validate inputs
+                if (years < 1) {
+                    alert("Please enter a valid investment period (at least 1 year)");
+                    return;
+                }
+                
+                // Calculate investment growth
+                let currentAmount = initialAmount;
+                let totalInvested = initialAmount;
+                let currentMonthlyInvestment = monthlyInvestment;
+                
+                const yearlyData = [];
+                
+                for (let year = 1; year <= years; year++) {
+                    // Add monthly investments for the year
+                    for (let month = 1; month <= 12; month++) {
+                        currentAmount += currentMonthlyInvestment;
+                        totalInvested += currentMonthlyInvestment;
+                        
+                        // Apply monthly return
+                        const monthlyReturnRate = Math.pow(1 + returnRate/100, 1/12) - 1;
+                        currentAmount *= (1 + monthlyReturnRate);
+                    }
+                    
+                    // Increase monthly investment for next year
+                    currentMonthlyInvestment *= (1 + investmentIncrease/100);
+                    
+                    // Store yearly data
+                    yearlyData.push({
+                        year: year,
+                        totalInvested: totalInvested,
+                        totalRevenue: currentAmount - totalInvested,
+                        finalAmount: currentAmount
+                    });
+                }
+                
+                // Update results
+                const lastYear = yearlyData[yearlyData.length - 1];
+                document.getElementById('totalInvested').textContent = `€${formatNumber(lastYear.totalInvested)}`;
+                document.getElementById('totalRevenue').textContent = `€${formatNumber(lastYear.totalRevenue)}`;
+                document.getElementById('finalAmount').textContent = `€${formatNumber(lastYear.finalAmount)}`;
+                
+                // Update chart
+                updateChart(yearlyData);
+                
+                // Update summary
+                updateSummary(yearlyData, initialAmount, monthlyInvestment, years, returnRate, investmentIncrease);
+            }
+            
+            function updateChart(data) {
+                const chart = document.getElementById('chart');
+                const emptyState = document.getElementById('emptyState');
+                
+                // Remove empty state if it exists
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                
+                chart.innerHTML = '';
+                
+                // Find maximum value for scaling
+                const maxValue = Math.max(...data.map(d => d.finalAmount));
+                
+                data.forEach(item => {
+                    const yearGroup = document.createElement('div');
+                    yearGroup.className = 'year-group';
+                    
+                    // Create stacked bar container
+                    const stackedBar = document.createElement('div');
+                    stackedBar.className = 'stacked-bar';
+                    
+                    // Calculate heights for segments
+                    const investedHeight = (item.totalInvested / maxValue) * 100;
+                    const revenueHeight = (item.totalRevenue / maxValue) * 100;
+                    
+                    // Create revenue segment (top)
+                    const revenueSegment = document.createElement('div');
+                    revenueSegment.className = 'bar-segment bar-revenue';
+                    revenueSegment.style.height = `${revenueHeight}%`;
+                    stackedBar.appendChild(revenueSegment);
+                    
+                    // Create invested segment (bottom)
+                    const investedSegment = document.createElement('div');
+                    investedSegment.className = 'bar-segment bar-invested';
+                    investedSegment.style.height = `${investedHeight}%`;
+                    stackedBar.appendChild(investedSegment);
+                    
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip';
+                    tooltip.innerHTML = `
+                        Year ${item.year}<br>
+                        Invested: €${formatNumber(item.totalInvested)}<br>
+                        Revenue: €${formatNumber(item.totalRevenue)}<br>
+                        Total: €${formatNumber(item.finalAmount)}
+                    `;
+                    stackedBar.appendChild(tooltip);
+                    
+                    // Add hover events
+                    stackedBar.addEventListener('mouseover', function() {
+                        tooltip.classList.add('show');
+                    });
+                    stackedBar.addEventListener('mouseout', function() {
+                        tooltip.classList.remove('show');
+                    });
+                    
+                    yearGroup.appendChild(stackedBar);
+                    
+                    // Add year label at the bottom
+                    const yearLabel = document.createElement('div');
+                    yearLabel.className = 'year-label';
+                    yearLabel.textContent = `Year ${item.year}`;
+                    yearGroup.appendChild(yearLabel);
+                    
+                    chart.appendChild(yearGroup);
+                });
+            }
+            
+            function updateSummary(data, initialAmount, monthlyInvestment, years, returnRate, investmentIncrease) {
+                const summary = document.getElementById('summary');
+                const lastYear = data[data.length - 1];
+                
+                summary.innerHTML = `
+                    <h3>Investment Summary</h3>
+                    <p>Starting with €${formatNumber(initialAmount)} and investing €${formatNumber(monthlyInvestment)} monthly</p>
+                    <p>With an annual return of ${returnRate}% and annual investment increase of ${investmentIncrease}%</p>
+                    <p>After ${years} years, your investment of €${formatNumber(lastYear.totalInvested)} grew to €${formatNumber(lastYear.finalAmount)}</p>
+                    <p>That's a profit of €${formatNumber(lastYear.totalRevenue)} (${((lastYear.totalRevenue / lastYear.totalInvested) * 100).toFixed(1)}% return)</p>
+                `;
+            }
+            
+            function formatNumber(num) {
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        });
+    </script>
+</body>
+</html>
